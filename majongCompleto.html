@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mahjong da Mão</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background:
+                radial-gradient(circle at 15% 18%, rgba(255, 218, 112, 0.2), transparent 18%),
+                radial-gradient(circle at 85% 35%, rgba(87, 220, 176, 0.18), transparent 20%),
+                linear-gradient(145deg, #17614e, #082b25 72%);
+            color: #173b31;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body::before,
+        body::after {
+            content: "✦";
+            position: fixed;
+            z-index: 0;
+            color: rgba(255, 224, 137, 0.22);
+            font-size: 90px;
+            pointer-events: none;
+            animation: flutuarFundo 7s ease-in-out infinite alternate;
+        }
+
+        body::before {
+            top: 7%;
+            left: 4%;
+        }
+
+        body::after {
+            right: 5%;
+            bottom: 8%;
+            animation-delay: -3s;
+        }
+
+        @keyframes flutuarFundo {
+            to {
+                transform: translateY(24px) rotate(25deg) scale(1.15);
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 95%;
+            max-width: 1050px;
+            margin: auto;
+            padding: 25px 0 40px;
+        }
+
+        h1 {
+            margin: 0 0 5px;
+            color: #fff8df;
+            text-align: center;
+            font-family: Georgia, serif;
+            font-size: 42px;
+            text-shadow: 0 4px 0 #6d401e, 0 7px 16px rgba(0, 0, 0, 0.4);
+            animation: entradaTitulo 0.7s cubic-bezier(.2, .9, .3, 1.25);
+        }
+
+        @keyframes entradaTitulo {
+            from {
+                opacity: 0;
+                transform: translateY(-25px) scale(0.85);
+            }
+        }
+
+        .subtitulo {
+            margin: 0;
+            color: #c8e1d8;
+            text-align: center;
+        }
+
+        .regras-rapidas {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin: 14px auto 0;
+        }
+
+        .regra-rapida {
+            padding: 7px 11px;
+            border: 1px solid rgba(255, 231, 170, 0.35);
+            border-radius: 20px;
+            background: rgba(4, 37, 30, 0.45);
+            color: #f5e4b4;
+            font-size: 12px;
+        }
+
+        .informacoes {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 22px 0 15px;
+        }
+
+        .informacao {
+            min-width: 105px;
+            padding: 10px 14px;
+            border: 2px solid #aa7b40;
+            border-radius: 10px;
+            background-color: #f5efdf;
+            text-align: center;
+            box-shadow: 0 4px 0 #674323;
+        }
+
+        .informacao span {
+            display: block;
+            color: #786d59;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .informacao strong {
+            font-size: 23px;
+        }
+
+        .menu {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-bottom: 18px;
+        }
+
+        .botao-menu,
+        .botao-final {
+            padding: 11px 18px;
+            border: 2px solid #c49350;
+            border-radius: 8px;
+            background-color: #633a20;
+            color: #fff4d6;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #351c10;
+        }
+
+        .botao-menu:hover,
+        .botao-final:hover {
+            background-color: #82502c;
+            transform: translateY(-1px);
+        }
+
+        /* A mão recebe as peças retiradas do tabuleiro. */
+        .area-mao {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 18px;
+            padding: 13px;
+            border: 5px solid #815029;
+            border-radius: 14px;
+            background-color: #30160f;
+            box-shadow: 0 6px 0 #1e0c08, inset 0 0 12px #100;
+            transition: transform 0.2s;
+        }
+
+        .area-mao::before {
+            content: "GUARDE E COMBINE";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            padding: 3px 12px;
+            border-radius: 10px;
+            background: #e9ad4f;
+            color: #49260f;
+            font-size: 9px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transform: translateX(-50%);
+        }
+
+        .area-mao.tremendo {
+            animation: tremerMao 0.45s;
+        }
+
+        @keyframes tremerMao {
+            20%, 60% { transform: translateX(-10px) rotate(-1deg); }
+            40%, 80% { transform: translateX(10px) rotate(1deg); }
+        }
+
+        .titulo-mao {
+            margin: 0 0 9px;
+            color: #f8d18a;
+            text-align: center;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+
+        #mao {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            min-height: 70px;
+        }
+
+        .espaco-mao {
+            width: 58px;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #6f3d2b;
+            border-radius: 6px;
+            background-color: #401c14;
+            color: #173b31;
+            font-size: 37px;
+            transition: 0.2s;
+        }
+
+        .espaco-mao.ocupado {
+            border-color: #d0b879;
+            background: linear-gradient(135deg, #fffdf5, #e9dcb5);
+            box-shadow: 3px 4px 0 #9a824d;
+            animation: entrarNaMao 0.2s ease-out;
+        }
+
+        @keyframes entrarNaMao {
+            from {
+                transform: translateY(-12px);
+                opacity: 0;
+            }
+        }
+
+        .efeito-par {
+            position: absolute;
+            z-index: 20;
+            left: 50%;
+            top: 50%;
+            color: #ffe169;
+            font-size: 25px;
+            font-weight: 900;
+            text-shadow: 0 3px 0 #7c371a, 0 0 12px white;
+            pointer-events: none;
+            animation: efeitoPar 0.9s forwards;
+        }
+
+        @keyframes efeitoPar {
+            from { transform: translate(-50%, -30%) scale(0.5); opacity: 0; }
+            35% { transform: translate(-50%, -80%) scale(1.25) rotate(-4deg); opacity: 1; }
+            to { transform: translate(-50%, -160%) scale(1); opacity: 0; }
+        }
+
+        .area-tabuleiro {
+            overflow: auto;
+            min-height: 430px;
+            padding: 30px;
+            border: 2px solid #a8773d;
+            border-radius: 14px;
+            background:
+                linear-gradient(rgba(8, 63, 49, 0.9), rgba(5, 47, 38, 0.94)),
+                repeating-linear-gradient(45deg, transparent 0 18px, rgba(255, 255, 255, 0.04) 18px 20px);
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #tabuleiro {
+            position: relative;
+            margin: auto;
+        }
+
+        .peca {
+            position: absolute;
+            width: 62px;
+            height: 82px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #baa978;
+            border-radius: 7px;
+            background: linear-gradient(135deg, #fffdf5, #e9dcb5);
+            color: #173b31;
+            font-size: 40px;
+            box-shadow: 4px 5px 0 #745f99, 7px 9px 9px rgba(0, 0, 0, 0.42);
+            cursor: pointer;
+            transition: 0.18s;
+            animation: aparecerPeca 0.38s backwards cubic-bezier(.2, .9, .3, 1.2);
+        }
+
+        @keyframes aparecerPeca {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.75) rotate(-4deg);
+            }
+        }
+
+        .peca.livre:hover {
+            transform: translateY(-5px);
+            filter: brightness(1.1);
+        }
+
+        .peca.bloqueada {
+            filter: brightness(0.58) saturate(0.55);
+            cursor: not-allowed;
+        }
+
+        .peca.dica {
+            outline: 4px solid #ffd34e;
+            animation: piscar 0.55s infinite alternate;
+        }
+
+        .peca.saindo {
+            pointer-events: none;
+            animation: sairDoTabuleiro 0.28s forwards ease-in;
+        }
+
+        @keyframes sairDoTabuleiro {
+            45% {
+                transform: translateY(-18px) scale(1.12) rotate(5deg);
+                filter: brightness(1.35);
+            }
+            to {
+                transform: translateY(-55px) scale(0.25) rotate(15deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes piscar {
+            to {
+                filter: brightness(1.35);
+                transform: translateY(-5px);
+            }
+        }
+
+        #mensagem {
+            min-height: 24px;
+            margin: 18px 0 0;
+            color: #fff0bf;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Tela mostrada ao vencer ou perder. */
+        .tela-final {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-color: rgba(4, 25, 20, 0.82);
+        }
+
+        .tela-final.escondida {
+            display: none;
+        }
+
+        .caixa-final {
+            width: min(400px, 100%);
+            padding: 32px;
+            border: 4px solid #a87539;
+            border-radius: 16px;
+            background-color: #f5efdf;
+            text-align: center;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+            animation: abrirResultado 0.5s cubic-bezier(.2, .9, .3, 1.25);
+        }
+
+        @keyframes abrirResultado {
+            from { opacity: 0; transform: scale(0.65) rotate(-4deg); }
+        }
+
+        .icone-final {
+            margin-bottom: 4px;
+            font-size: 62px;
+            animation: pularIcone 0.7s infinite alternate ease-in-out;
+        }
+
+        @keyframes pularIcone {
+            to { transform: translateY(-8px) rotate(4deg); }
+        }
+
+        #confetes {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .confete {
+            position: absolute;
+            top: -25px;
+            width: 11px;
+            height: 20px;
+            border-radius: 3px;
+            animation: cairConfete 2.8s linear forwards;
+        }
+
+        @keyframes cairConfete {
+            to {
+                top: 105vh;
+                transform: rotate(760deg) translateX(45px);
+            }
+        }
+
+        .caixa-final h2 {
+            margin: 0 0 10px;
+            font-family: Georgia, serif;
+            font-size: 34px;
+        }
+
+        .caixa-final p {
+            color: #635d50;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 31px;
+            }
+
+            .container {
+                width: 98%;
+            }
+
+            .informacoes {
+                gap: 6px;
+            }
+
+            .informacao {
+                min-width: 82px;
+                padding: 8px;
+            }
+
+            .area-tabuleiro {
+                padding: 15px;
+            }
+
+            .espaco-mao {
+                width: 48px;
+                height: 58px;
+                font-size: 31px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🀄 Mahjong da Mão 🀄</h1>
+        <p class="subtitulo">Retire peças livres, forme pares na mão e não deixe os espaços lotarem.</p>
+
+        <div class="regras-rapidas">
+            <span class="regra-rapida">👆 Escolha uma peça livre</span>
+            <span class="regra-rapida">🧺 Guarde na mão</span>
+            <span class="regra-rapida">✨ Junte 2 iguais</span>
+            <span class="regra-rapida">⚠️ Limite: 4 peças</span>
+        </div>
+
+        <div class="informacoes">
+            <div class="informacao">
+                <span>NÍVEL</span>
+                <strong id="contadorNivel">1</strong>
+            </div>
+
+            <div class="informacao">
+                <span>PEÇAS</span>
+                <strong id="contadorPecas">0</strong>
+            </div>
+
+            <div class="informacao">
+                <span>JOGADAS</span>
+                <strong id="contadorJogadas">0</strong>
+            </div>
+
+            <div class="informacao">
+                <span>MÃO</span>
+                <strong id="contadorMao">0/0</strong>
+            </div>
+        </div>
+
+        <div class="menu">
+            <button class="botao-menu" onclick="iniciarJogo()">Novo jogo</button>
+            <button class="botao-menu" onclick="reiniciarNivel()">Reiniciar nível</button>
+            <button class="botao-menu" onclick="mostrarDica()">Mostrar dica</button>
+            <button id="botaoSom" class="botao-menu" onclick="alternarSom()">🔊 Som: ligado</button>
+        </div>
+
+        <div class="area-mao">
+            <p class="titulo-mao">SUA MÃO</p>
+            <div id="mao"></div>
+        </div>
+
+        <div class="area-tabuleiro">
+            <div id="tabuleiro"></div>
+        </div>
+
+        <p id="mensagem">Selecione uma peça livre.</p>
+    </div>
+
+    <div id="telaFinal" class="tela-final escondida">
+        <div class="caixa-final">
+            <div id="iconeFinal" class="icone-final">🏆</div>
+            <h2 id="tituloFinal"></h2>
+            <p id="textoFinal"></p>
+            <button id="botaoFinal" class="botao-final"></button>
+        </div>
+    </div>
+
+    <div id="confetes"></div>
+
+    <script>
+
+        const niveis = [
+            {
+                nome: "Aprendiz",
+                camadas: [
+                    [
+                        [0, 1, 1, 1, 1, 0],
+                        [1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1],
+                        [0, 0, 0, 0, 0, 0]
+                    ],
+                    [
+                        [0, 0, 0, 0, 0, 0],
+                        [0, 0, 1, 1, 0, 0],
+                        [0, 0, 1, 1, 0, 0],
+                        [0, 0, 0, 0, 0, 0]
+                    ]
+                ]
+            },
+            {
+                nome: "Estrategista",
+                camadas: [
+                    [
+                        [0, 1, 1, 1, 1, 1, 0],
+                        [1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1],
+                        [0, 1, 1, 1, 1, 1, 0]
+                    ],
+                    [
+                        [0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 1, 1, 1, 0, 0],
+                        [0, 0, 1, 1, 1, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0]
+                    ],
+                    [
+                        [0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0]
+                    ]
+                ]
+            },
+            {
+                nome: "Mestre",
+                camadas: [
+                    [
+                        [0, 1, 1, 1, 1, 1, 1, 0],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [0, 1, 1, 1, 1, 1, 1, 0]
+                    ],
+                    [
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 1, 1, 1, 1, 0, 0],
+                        [0, 0, 1, 1, 1, 1, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0]
+                    ],
+                    [
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 1, 1, 0, 0, 0],
+                        [0, 0, 0, 1, 1, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0]
+                    ]
+                ]
+            }
+        ];
+
+        const simbolos = [
+            "🀀", "🀁", "🀂", "🀃", "🀄", "🀅",
+            "🀆", "🀇", "🀈", "🀉", "🀊", "🀋",
+            "🀌", "🀍", "🀎", "🀏", "🀐", "🀑",
+            "🀒", "🀓", "🀔", "🀕", "🀖", "🀗"
+        ];
+
+        // O limite é igual em todos os níveis.
+        const LIMITE_MAO = 4;
+
+        let todasAsPecas = [];
+        let mao = [];
+        let proximoId = 1;
+        let numeroDeJogadas = 0;
+        let nivelAtual = 0;
+        let estadoDoJogo = "jogando";
+        let idsDaDica = [];
+        let somAtivo = true;
+        let contextoAudio = null;
+        let numeroDaPartida = 0;
+        let animarEntradaDoNivel = true;
+
+
+        function criarNota(frequencia, duracao, atraso = 0, formato = "sine") {
+            if (!somAtivo) {
+                return;
+            }
+
+            const ClasseAudio = window.AudioContext || window.webkitAudioContext;
+
+            if (!ClasseAudio) {
+                return;
+            }
+
+            if (contextoAudio === null) {
+                contextoAudio = new ClasseAudio();
+            }
+
+            if (contextoAudio.state === "suspended") {
+                contextoAudio.resume();
+            }
+
+            const oscilador = contextoAudio.createOscillator();
+            const volume = contextoAudio.createGain();
+            const inicio = contextoAudio.currentTime + atraso;
+
+            oscilador.type = formato;
+            oscilador.frequency.setValueAtTime(frequencia, inicio);
+            volume.gain.setValueAtTime(0.0001, inicio);
+            volume.gain.exponentialRampToValueAtTime(0.07, inicio + 0.02);
+            volume.gain.exponentialRampToValueAtTime(0.0001, inicio + duracao);
+
+            oscilador.connect(volume);
+            volume.connect(contextoAudio.destination);
+            oscilador.start(inicio);
+            oscilador.stop(inicio + duracao + 0.03);
+        }
+
+        function tocarSom(nomeDoSom) {
+            if (nomeDoSom === "selecionar") {
+                criarNota(520, 0.12, 0, "triangle");
+            }
+
+            if (nomeDoSom === "bloqueada") {
+                criarNota(150, 0.18, 0, "sawtooth");
+                criarNota(115, 0.2, 0.1, "sawtooth");
+            }
+
+            if (nomeDoSom === "par") {
+                criarNota(660, 0.16, 0, "triangle");
+                criarNota(880, 0.2, 0.11, "triangle");
+            }
+
+            if (nomeDoSom === "dica") {
+                criarNota(740, 0.12, 0, "sine");
+                criarNota(980, 0.16, 0.09, "sine");
+            }
+
+            if (nomeDoSom === "vitoria") {
+                [523, 659, 784, 1047].forEach((nota, indice) => {
+                    criarNota(nota, 0.32, indice * 0.14, "triangle");
+                });
+            }
+
+            if (nomeDoSom === "derrota") {
+                [330, 260, 190].forEach((nota, indice) => {
+                    criarNota(nota, 0.32, indice * 0.16, "sawtooth");
+                });
+            }
+        }
+
+        function alternarSom() {
+            somAtivo = !somAtivo;
+            document.querySelector("#botaoSom").textContent =
+                somAtivo ? "🔊 Som: ligado" : "🔇 Som: desligado";
+
+            if (somAtivo) {
+                tocarSom("selecionar");
+            }
+        }
+
+        function gerarCamada(matriz, numeroDaCamada) {
+            const pecas = [];
+
+            matriz.forEach((linhaArray, linha) => {
+                linhaArray.forEach((valor, coluna) => {
+                    if (valor === 1) {
+                        pecas.push({
+                            id: proximoId,
+                            linha: linha,
+                            coluna: coluna,
+                            camada: numeroDaCamada,
+                            tipo: null,
+                            removida: false
+                        });
+
+                        proximoId++;
+                    }
+                });
+            });
+
+            return pecas;
+        }
+
+        function embaralhar(array) {
+            for (let indice = array.length - 1; indice > 0; indice--) {
+                const posicaoSorteada = Math.floor(Math.random() * (indice + 1));
+                const temporario = array[indice];
+
+                array[indice] = array[posicaoSorteada];
+                array[posicaoSorteada] = temporario;
+            }
+
+            return array;
+        }
+
+        function distribuirPares() {
+            const quantidadeDePares = todasAsPecas.length / 2;
+            const tiposDasPecas = [];
+
+            for (let indice = 0; indice < quantidadeDePares; indice++) {
+                const simbolo = simbolos[indice % simbolos.length];
+
+                tiposDasPecas.push(simbolo);
+                tiposDasPecas.push(simbolo);
+            }
+
+            embaralhar(tiposDasPecas);
+
+            todasAsPecas.forEach((peca, indice) => {
+                peca.tipo = tiposDasPecas[indice];
+            });
+        }
+
+
+        function estaLivre(peca) {
+            const pecasAtivas = todasAsPecas.filter(outra => !outra.removida);
+
+            const temPecaEmCima = pecasAtivas.some(outra =>
+                outra.id !== peca.id &&
+                outra.camada > peca.camada &&
+                outra.linha === peca.linha &&
+                outra.coluna === peca.coluna
+            );
+
+            const temPecaNaEsquerda = pecasAtivas.some(outra =>
+                outra.id !== peca.id &&
+                outra.camada === peca.camada &&
+                outra.linha === peca.linha &&
+                outra.coluna === peca.coluna - 1
+            );
+
+            const temPecaNaDireita = pecasAtivas.some(outra =>
+                outra.id !== peca.id &&
+                outra.camada === peca.camada &&
+                outra.linha === peca.linha &&
+                outra.coluna === peca.coluna + 1
+            );
+
+            const temUmLadoAberto = !temPecaNaEsquerda || !temPecaNaDireita;
+
+            return !temPecaEmCima && temUmLadoAberto;
+        }
+
+
+
+        function desenharTabuleiro() {
+            const tabuleiro = document.querySelector("#tabuleiro");
+            const camadasDoNivel = niveis[nivelAtual].camadas;
+            const quantidadeLinhas = camadasDoNivel[0].length;
+            const quantidadeColunas = camadasDoNivel[0][0].length;
+
+            tabuleiro.innerHTML = "";
+            tabuleiro.style.width = quantidadeColunas * 70 + 30 + "px";
+            tabuleiro.style.height = quantidadeLinhas * 90 + 30 + "px";
+
+            todasAsPecas.forEach(peca => {
+                if (peca.removida) {
+                    return;
+                }
+
+                const elementoPeca = document.createElement("button");
+                elementoPeca.classList.add("peca");
+                elementoPeca.textContent = peca.tipo;
+                elementoPeca.dataset.id = peca.id;
+                elementoPeca.style.left = peca.coluna * 70 + peca.camada * 8 + "px";
+                elementoPeca.style.top = peca.linha * 90 - peca.camada * 8 + "px";
+                elementoPeca.style.zIndex = peca.camada * 100 + peca.linha;
+
+                if (animarEntradaDoNivel) {
+                    elementoPeca.style.animationDelay = (peca.id % 10) * 0.025 + "s";
+                } else {
+                    elementoPeca.style.animation = "none";
+                }
+
+                if (estaLivre(peca)) {
+                    elementoPeca.classList.add("livre");
+                } else {
+                    elementoPeca.classList.add("bloqueada");
+                }
+
+                if (idsDaDica.includes(peca.id)) {
+                    elementoPeca.classList.add("dica");
+                }
+
+                elementoPeca.addEventListener("click", () => {
+                    selecionarPeca(peca.id);
+                });
+
+                tabuleiro.appendChild(elementoPeca);
+            });
+
+            desenharMao();
+            atualizarInformacoes();
+            animarEntradaDoNivel = false;
+        }
+
+        function desenharMao() {
+            const elementoMao = document.querySelector("#mao");
+            const limiteMao = LIMITE_MAO;
+
+            elementoMao.innerHTML = "";
+
+            for (let indice = 0; indice < limiteMao; indice++) {
+                const espaco = document.createElement("div");
+                espaco.classList.add("espaco-mao");
+
+                if (mao[indice] !== undefined) {
+                    espaco.classList.add("ocupado");
+                    espaco.textContent = mao[indice].tipo;
+                }
+
+                elementoMao.appendChild(espaco);
+            }
+        }
+
+
+
+        function selecionarPeca(idDaPeca) {
+            if (estadoDoJogo !== "jogando") {
+                return;
+            }
+
+            const pecaClicada = todasAsPecas.find(peca => peca.id === idDaPeca);
+            const elementoClicado = document.querySelector('[data-id="' + idDaPeca + '"]');
+
+            if (!pecaClicada || pecaClicada.removida || !estaLivre(pecaClicada)) {
+                mostrarMensagem("Essa peça está bloqueada.");
+                tocarSom("bloqueada");
+
+                if (elementoClicado) {
+                    elementoClicado.animate(
+                        [
+                            { transform: "translateX(0)" },
+                            { transform: "translateX(-6px)" },
+                            { transform: "translateX(6px)" },
+                            { transform: "translateX(0)" }
+                        ],
+                        { duration: 240 }
+                    );
+                }
+
+                return;
+            }
+
+
+            estadoDoJogo = "animando";
+            tocarSom("selecionar");
+
+            if (elementoClicado) {
+                elementoClicado.classList.add("saindo");
+            }
+
+            const partidaDaSelecao = numeroDaPartida;
+
+            setTimeout(() => {
+                if (partidaDaSelecao !== numeroDaPartida) {
+                    return;
+                }
+
+                concluirSelecao(pecaClicada);
+            }, 280);
+        }
+
+        function concluirSelecao(pecaClicada) {
+
+            pecaClicada.removida = true;
+            mao.push({ id: pecaClicada.id, tipo: pecaClicada.tipo });
+            numeroDeJogadas++;
+            idsDaDica = [];
+
+            const formouPar = removerParDaMao();
+
+            if (formouPar) {
+                mostrarMensagem("Par formado! As duas peças saíram da mão.");
+                tocarSom("par");
+                mostrarEfeitoPar(pecaClicada.tipo);
+            } else {
+                mostrarMensagem("Peça guardada na mão. Procure seu par.");
+            }
+
+            estadoDoJogo = "jogando";
+            desenharTabuleiro();
+            verificarFimDaJogada();
+        }
+
+        function mostrarEfeitoPar(tipo) {
+            const areaMao = document.querySelector(".area-mao");
+            const efeito = document.createElement("div");
+
+            efeito.classList.add("efeito-par");
+            efeito.textContent = tipo + "  PAR!  " + tipo;
+            areaMao.appendChild(efeito);
+
+            setTimeout(() => efeito.remove(), 950);
+        }
+
+        function removerParDaMao() {
+            for (let primeiroIndice = 0; primeiroIndice < mao.length; primeiroIndice++) {
+                const segundoIndice = mao.findIndex((peca, indice) =>
+                    indice > primeiroIndice &&
+                    peca.tipo === mao[primeiroIndice].tipo
+                );
+
+                if (segundoIndice !== -1) {
+
+                    mao.splice(segundoIndice, 1);
+                    mao.splice(primeiroIndice, 1);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function verificarFimDaJogada() {
+            const aindaExistemPecas = todasAsPecas.some(peca => !peca.removida);
+            const limiteMao = LIMITE_MAO;
+
+            if (!aindaExistemPecas && mao.length === 0) {
+                vencerNivel();
+                return;
+            }
+
+
+            if (mao.length >= limiteMao) {
+                perderJogo();
+            }
+        }
+
+ 
+        function mostrarDica() {
+            if (estadoDoJogo !== "jogando") {
+                return;
+            }
+
+            const pecasLivres = todasAsPecas.filter(peca =>
+                !peca.removida && estaLivre(peca)
+            );
+
+
+            for (let indiceMao = 0; indiceMao < mao.length; indiceMao++) {
+                const parNoTabuleiro = pecasLivres.find(peca =>
+                    peca.tipo === mao[indiceMao].tipo
+                );
+
+                if (parNoTabuleiro) {
+                    idsDaDica = [parNoTabuleiro.id];
+                    desenharTabuleiro();
+                    tocarSom("dica");
+                    mostrarMensagem("Esta peça completa um par que já está na sua mão.");
+                    limparDicaDepois();
+                    return;
+                }
+            }
+
+            for (let primeiroIndice = 0; primeiroIndice < pecasLivres.length; primeiroIndice++) {
+                const par = pecasLivres.find((peca, indice) =>
+                    indice > primeiroIndice &&
+                    peca.tipo === pecasLivres[primeiroIndice].tipo
+                );
+
+                if (par) {
+                    idsDaDica = [pecasLivres[primeiroIndice].id, par.id];
+                    desenharTabuleiro();
+                    tocarSom("dica");
+                    mostrarMensagem("Estas duas peças livres formam um par.");
+                    limparDicaDepois();
+                    return;
+                }
+            }
+
+            mostrarMensagem("Não há par imediato: escolha uma peça livre para abrir caminho.");
+        }
+
+        function limparDicaDepois() {
+            setTimeout(() => {
+                idsDaDica = [];
+
+                if (estadoDoJogo === "jogando") {
+                    desenharTabuleiro();
+                }
+            }, 1800);
+        }
+
+
+
+        function vencerNivel() {
+            estadoDoJogo = "venceu";
+            tocarSom("vitoria");
+            soltarConfetes();
+
+            if (nivelAtual < niveis.length - 1) {
+                mostrarTelaFinal(
+                    "Nível concluído!",
+                    "Você venceu o nível " + (nivelAtual + 1) + " — " + niveis[nivelAtual].nome + ". O próximo terá mais peças e uma formação mais difícil.",
+                    "Próximo nível",
+                    avancarNivel,
+                    "🌟"
+                );
+            } else {
+                mostrarTelaFinal(
+                    "Você venceu o jogo!",
+                    "Parabéns! Você concluiu todos os níveis.",
+                    "Jogar novamente",
+                    iniciarJogo,
+                    "🏆"
+                );
+            }
+        }
+
+        function perderJogo() {
+            estadoDoJogo = "perdeu";
+            tocarSom("derrota");
+
+            const areaMao = document.querySelector(".area-mao");
+            areaMao.classList.add("tremendo");
+            setTimeout(() => areaMao.classList.remove("tremendo"), 500);
+
+            mostrarTelaFinal(
+                "A mão ficou cheia!",
+                "Não houve espaço para uma nova peça. Tente abrir o tabuleiro formando pares mais cedo.",
+                "Tentar novamente",
+                reiniciarNivel,
+                "😵"
+            );
+        }
+
+        function mostrarTelaFinal(titulo, texto, textoBotao, funcaoBotao, icone) {
+            const tela = document.querySelector("#telaFinal");
+            const botao = document.querySelector("#botaoFinal");
+
+            document.querySelector("#iconeFinal").textContent = icone;
+            document.querySelector("#tituloFinal").textContent = titulo;
+            document.querySelector("#textoFinal").textContent = texto;
+            botao.textContent = textoBotao;
+            botao.onclick = funcaoBotao;
+            tela.classList.remove("escondida");
+        }
+
+        function soltarConfetes() {
+            const areaConfetes = document.querySelector("#confetes");
+            const cores = ["#ffd34e", "#ff6b6b", "#64dfb3", "#b99cff", "#fff4cf"];
+
+            areaConfetes.innerHTML = "";
+
+            for (let indice = 0; indice < 40; indice++) {
+                const confete = document.createElement("span");
+
+                confete.classList.add("confete");
+                confete.style.left = Math.random() * 100 + "%";
+                confete.style.backgroundColor = cores[indice % cores.length];
+                confete.style.animationDelay = Math.random() * 0.8 + "s";
+                confete.style.animationDuration = 2.1 + Math.random() * 1.4 + "s";
+                areaConfetes.appendChild(confete);
+            }
+
+            setTimeout(() => {
+                areaConfetes.innerHTML = "";
+            }, 4200);
+        }
+
+        function esconderTelaFinal() {
+            document.querySelector("#telaFinal").classList.add("escondida");
+        }
+
+        function avancarNivel() {
+            nivelAtual++;
+            prepararNivel();
+        }
+
+        function reiniciarNivel() {
+            prepararNivel();
+        }
+
+
+
+        function atualizarInformacoes() {
+            const quantidadeDePecas = todasAsPecas.filter(peca => !peca.removida).length;
+            const limiteMao = LIMITE_MAO;
+
+            document.querySelector("#contadorNivel").textContent =
+                (nivelAtual + 1) + " - " + niveis[nivelAtual].nome;
+            document.querySelector("#contadorPecas").textContent = quantidadeDePecas;
+            document.querySelector("#contadorJogadas").textContent = numeroDeJogadas;
+            document.querySelector("#contadorMao").textContent = mao.length + "/" + limiteMao;
+        }
+
+        function mostrarMensagem(texto) {
+            document.querySelector("#mensagem").textContent = texto;
+        }
+
+        function prepararNivel() {
+            numeroDaPartida++;
+            todasAsPecas = [];
+            mao = [];
+            proximoId = 1;
+            numeroDeJogadas = 0;
+            estadoDoJogo = "jogando";
+            idsDaDica = [];
+            animarEntradaDoNivel = true;
+            esconderTelaFinal();
+            document.querySelector("#confetes").innerHTML = "";
+
+            niveis[nivelAtual].camadas.forEach((matriz, numeroDaCamada) => {
+                todasAsPecas.push(...gerarCamada(matriz, numeroDaCamada));
+            });
+
+            distribuirPares();
+            desenharTabuleiro();
+            mostrarMensagem("Selecione uma peça livre e coloque-a na mão.");
+        }
+
+        function iniciarJogo() {
+            nivelAtual = 0;
+            prepararNivel();
+        }
+
+        iniciarJogo();
+    </script>
+</body>
+
+</html>
